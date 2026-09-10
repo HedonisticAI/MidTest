@@ -5,6 +5,11 @@ type DomainErrorField struct {
 	Text string `json:"text"`
 }
 
+type AuthCred struct {
+	Login    string
+	Password string
+}
+
 type DomainResponse struct {
 	Error    *DomainErrorField `json:"error,omitempty"`
 	Response interface{}       `json:"response,omitempty"`

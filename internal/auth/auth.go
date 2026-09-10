@@ -9,22 +9,24 @@ import (
 const PWD_MIN_LENGTH = 8
 const LOGIN_MIN_LENGTH = 8
 
-type AuthToken string
-type ID string
-
 type AuthInfo struct {
-	Token AuthToken
-	ID    ID
+	Token string
+	ID    string
 }
 
 type LoginInfo struct {
-	Login    Login    `json:"login"`
-	Password Password `json:"password"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
-func CreateToken() AuthToken {
+func CreateID() string {
+	IDS := uuid.New().String()
+	return IDS
+}
+
+func CreateToken() string {
 	Token := uuid.New().String()
-	return AuthToken(Token)
+	return Token
 }
 
 type Login string
@@ -32,6 +34,12 @@ type Login string
 func LoginValidate(L string) bool {
 	if len(L) < LOGIN_MIN_LENGTH {
 		return false
+	}
+	for _, r := range L {
+		switch {
+		case unicode.IsPunct(r) || unicode.IsSymbol(r) || unicode.IsMark(r) || (!unicode.IsLetter(r) && !unicode.IsNumber(r)):
+			return false
+		}
 	}
 	return true
 }

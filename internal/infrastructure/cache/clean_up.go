@@ -9,7 +9,6 @@ func (c *Cache) StartGC() {
 func (c *Cache) GC() {
 
 	for {
-		// ожидаем время установленное в cleanupInterval
 		<-time.After(c.cleanupInterval)
 
 		if c.items == nil {

@@ -51,7 +51,6 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 
 	item, found := c.items[key]
 
-	// ключ не найден
 	if !found {
 		return nil, false
 	}

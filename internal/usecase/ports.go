@@ -8,21 +8,24 @@ import (
 
 type Usecase interface {
 	Register(context.Context, RegisterInput) (*RegisterOutput, error)
-	LogIn(ctx context.Context, AuthInfo auth.LoginInfo) (*LoginOutput, error)
+	LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput, error)
+	EndSession(Token string) error
 }
 
 type PostgresRepo interface {
-	Register(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.AuthInfo, error)
-	LogIn(ctx context.Context, Login string, Password string) (*auth.AuthInfo, error)
+	Register(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.LoginInfo, error)
+	LogIn(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.AuthInfo, error)
 	DeleteFile(ctx context.Context, ID string) error
 }
 
 type CacheRepo interface {
 	LoadFile(Name string, Data interface{}, Duration time.Duration)
-	LoadAuth(AuthInfo auth.AuthInfo)
+	LoadAuth(Info auth.LoginInfo)
+	LoadToken(AuthInfo *auth.AuthInfo)
 	IsActive(Token string) bool
 	GetAuth(Token string) string
 	CheckPWD(Info auth.LoginInfo) bool
+	DeleteItem(key string) error
 }
 
 type RegisterInput struct {
@@ -36,10 +39,22 @@ type RegisterOutput struct {
 }
 
 type LoginInput struct {
-	Login     string `json:"login"`
-	Passwordd string `json:"password"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
 type LoginOutput struct {
 	Token string `json:"token"`
+}
+
+type DeleteInput struct {
+	ID string `json:"id"`
+}
+
+type EndSessionInput struct {
+	Token string `json:"token"`
+}
+
+type EndSessionOutput struct {
+	Success bool `json:"success"`
 }

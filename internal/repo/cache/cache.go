@@ -23,8 +23,8 @@ func (RepoCache *RepoCache) LoadAuth(Info auth.LoginInfo) {
 	RepoCache.Cache.Set(Info.Login, Info.Password, time.Hour)
 }
 
-func (RepoCache *RepoCache) LoadToken(AuthInfo auth.AuthInfo) {
-	RepoCache.Cache.Set(string(AuthInfo.Token), AuthInfo.ID, 0)
+func (RepoCache *RepoCache) LoadToken(AuthInfo *auth.AuthInfo) {
+	RepoCache.Cache.Set(AuthInfo.Token, AuthInfo.ID, 5*time.Minute)
 }
 
 func (RepoCache *RepoCache) IsActive(Token string) bool {
@@ -52,6 +52,6 @@ func (RepoCache *RepoCache) GetAuth(Token string) string {
 	return res.(string)
 }
 
-func (RepoCache *RepoCache) DeleteItem(key string) {
-	RepoCache.Cache.Delete(key)
+func (RepoCache *RepoCache) DeleteItem(key string) error {
+	return RepoCache.Cache.Delete(key)
 }

@@ -1,6 +1,7 @@
 package cache_repo_test
 
 import (
+	"midtest/internal/auth"
 	"midtest/internal/infrastructure/cache"
 	cache_repo "midtest/internal/repo/cache"
 	"testing"
@@ -19,7 +20,7 @@ func TestSimple(t *testing.T) {
 	// Test LoadFile method
 	testData := "test data"
 	repoCache.LoadFile("testKey", testData, 0)
-
+	repoCache.LoadAuth(auth.LoginInfo{Login: "testLogin", Password: "testPassword"})
 	// Test IsActive method
 	if !repoCache.IsActive("testKey") {
 		t.Errorf("Expected key to be active")

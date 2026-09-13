@@ -40,7 +40,8 @@ func (S *Service) LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput,
 	if !S.CacheRepo.CheckPWD(info) || err != nil {
 		return nil, domain.ErrBadParameter
 	}
-	S.CacheRepo.LoadToken(id)
+	token := auth.AuthInfo{ID: id.ID, Token: id.Token}
+	S.CacheRepo.LoadToken(token)
 	return &LoginOutput{Token: S.CacheRepo.GetAuth(string(id.Token))}, nil
 }
 
@@ -49,4 +50,22 @@ func (S *Service) Delete() {}
 func (S Service) EndSession(Token string) error {
 	err := S.CacheRepo.DeleteItem(Token)
 	return err
+}
+
+func (S Service) GetFile(ctx context.Context, ID string) (interface{}, error) {
+	Res, err := S.PostgresRepo.GetFile(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+	S.CacheRepo.LoadFile(ID, Res, 0)
+	return Res, nil
+}
+
+func (S Service) DeleteFile(ctx context.Context, ID string) error {
+	err := S.PostgresRepo.DeleteFile(ctx, ID)
+	if err != nil {
+		return err
+	}
+	S.CacheRepo.DeleteItem(ID)
+	return nil
 }

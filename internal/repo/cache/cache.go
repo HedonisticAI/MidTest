@@ -23,7 +23,7 @@ func (RepoCache *RepoCache) LoadAuth(Info auth.LoginInfo) {
 	RepoCache.Cache.Set(Info.Login, Info.Password, time.Hour)
 }
 
-func (RepoCache *RepoCache) LoadToken(AuthInfo *auth.AuthInfo) {
+func (RepoCache *RepoCache) LoadToken(AuthInfo auth.AuthInfo) {
 	RepoCache.Cache.Set(AuthInfo.Token, AuthInfo.ID, 5*time.Minute)
 }
 

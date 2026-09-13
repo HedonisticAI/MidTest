@@ -42,9 +42,15 @@ func (P *PostgresRepository) LogIn(ctx context.Context, AuthInfo auth.LoginInfo)
 	Res.Token = auth.CreateToken()
 	return &Res, nil
 }
-func (P *PostgresRepository) FileInfo(ID string) domain.FileInfo {
+func (P *PostgresRepository) GetFile(ctx context.Context, ID string) (domain.FileInfo, error) {
 	var Res domain.FileInfo
-	return Res
+	const query = `SELECT name, users, id, path, file FROM files WHERE id = $1`
+	row := P.Pool.QueryRow(ctx, query, ID)
+	err := row.Scan(&Res.Name, &Res.Users, &Res.ID, &Res.Path, &Res.File)
+	if err != nil {
+		return domain.FileInfo{}, err
+	}
+	return Res, nil
 }
 
 func (P *PostgresRepository) DeleteFile(ctx context.Context, ID string) error {

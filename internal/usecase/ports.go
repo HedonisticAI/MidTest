@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"midtest/internal/auth"
+	"midtest/internal/domain"
 	"time"
 )
 
@@ -15,13 +16,14 @@ type Usecase interface {
 type PostgresRepo interface {
 	Register(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.LoginInfo, error)
 	LogIn(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.AuthInfo, error)
+	GetFile(ctx context.Context, ID string) (domain.FileInfo, error)
 	DeleteFile(ctx context.Context, ID string) error
 }
 
 type CacheRepo interface {
 	LoadFile(Name string, Data interface{}, Duration time.Duration)
 	LoadAuth(Info auth.LoginInfo)
-	LoadToken(AuthInfo *auth.AuthInfo)
+	LoadToken(AuthInfo auth.AuthInfo)
 	IsActive(Token string) bool
 	GetAuth(Token string) string
 	CheckPWD(Info auth.LoginInfo) bool

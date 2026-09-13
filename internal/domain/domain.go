@@ -19,5 +19,7 @@ type DomainResponse struct {
 type FileInfo struct {
 	Name  string
 	Users []string
+	ID    string
+	Path  string
 	File  bool
 }

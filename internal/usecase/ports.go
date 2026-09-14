@@ -11,13 +11,15 @@ type Usecase interface {
 	Register(context.Context, RegisterInput) (*RegisterOutput, error)
 	LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput, error)
 	EndSession(Token string) error
+	GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
 }
 
 type PostgresRepo interface {
 	Register(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.LoginInfo, error)
 	LogIn(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.AuthInfo, error)
-	GetFile(ctx context.Context, ID string) (domain.FileInfo, error)
+	GetFileInfo(ctx context.Context, ID string) (domain.FileInfo, error)
 	DeleteFile(ctx context.Context, ID string) error
+	List(ctx context.Context, Filters map[string]string) ([]domain.FileInfo, error)
 }
 
 type CacheRepo interface {
@@ -28,6 +30,7 @@ type CacheRepo interface {
 	GetAuth(Token string) string
 	CheckPWD(Info auth.LoginInfo) bool
 	DeleteItem(key string) error
+	GetFile(ID string) (interface{}, bool)
 }
 
 type RegisterInput struct {
@@ -59,4 +62,8 @@ type EndSessionInput struct {
 
 type EndSessionOutput struct {
 	Success bool `json:"success"`
+}
+
+type ListInput struct {
+	Filters map[string]string
 }

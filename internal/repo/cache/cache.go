@@ -55,3 +55,7 @@ func (RepoCache *RepoCache) GetAuth(Token string) string {
 func (RepoCache *RepoCache) DeleteItem(key string) error {
 	return RepoCache.Cache.Delete(key)
 }
+
+func (RepoCache *RepoCache) GetFile(ID string) (interface{}, bool) {
+	return RepoCache.Cache.Get(ID)
+}

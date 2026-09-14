@@ -4,6 +4,9 @@ import (
 	"context"
 	"midtest/internal/auth"
 	"midtest/internal/domain"
+	"os"
+	"slices"
+	"time"
 )
 
 type Service struct {
@@ -45,24 +48,54 @@ func (S *Service) LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput,
 	return &LoginOutput{Token: S.CacheRepo.GetAuth(string(id.Token))}, nil
 }
 
-func (S *Service) Delete() {}
-
-func (S Service) EndSession(Token string) error {
+func (S *Service) EndSession(Token string) error {
 	err := S.CacheRepo.DeleteItem(Token)
 	return err
 }
 
-func (S Service) GetFile(ctx context.Context, ID string) (interface{}, error) {
-	Res, err := S.PostgresRepo.GetFile(ctx, ID)
+func (S *Service) ListFiles(ctx context.Context, List ListInput) (interface{}, error) {
+	Data, err := S.PostgresRepo.List(ctx, List.Filters)
 	if err != nil {
 		return nil, err
 	}
-	S.CacheRepo.LoadFile(ID, Res, 0)
-	return Res, nil
+	return Data, nil
 }
 
-func (S Service) DeleteFile(ctx context.Context, ID string) error {
-	err := S.PostgresRepo.DeleteFile(ctx, ID)
+func (S *Service) GetFile(ctx context.Context, ID string, Token string) (interface{}, error) {
+	if !S.CacheRepo.IsActive(Token) {
+		return nil, domain.ErrBadParameter
+	}
+	Res, err := S.PostgresRepo.GetFileInfo(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+	if !slices.Contains(Res.Users, ID) {
+		return nil, domain.ErrActionNotAuthorized
+	}
+	file, exists := S.CacheRepo.GetFile(ID)
+	if exists {
+		return file, nil
+	}
+	memfile, err := os.ReadFile(Res.Path + Res.Name)
+	if err != nil {
+		return nil, err
+	}
+	S.CacheRepo.LoadFile(Res.Name, memfile, 10*time.Minute)
+	return memfile, nil
+}
+
+func (S *Service) DeleteFile(ctx context.Context, ID string, Token string) error {
+	if !S.CacheRepo.IsActive(Token) {
+		return domain.ErrBadParameter
+	}
+	Res, err := S.PostgresRepo.GetFileInfo(ctx, ID)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(Res.Users, ID) {
+		return domain.ErrActionNotAuthorized
+	}
+	err = S.PostgresRepo.DeleteFile(ctx, ID)
 	if err != nil {
 		return err
 	}

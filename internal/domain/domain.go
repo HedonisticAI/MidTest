@@ -24,6 +24,6 @@ type FileInfo struct {
 	ID         string    `json:"id"`
 	Path       string    `json:"path"`
 	File       bool      `json:"file"`
-	Created_at time.Time `json:"created_at`
-	Updated_at time.Time `json:"updated_at`
+	Created_at time.Time `json:"created_at"`
+	Updated_at time.Time `json:"updated_at"`
 }

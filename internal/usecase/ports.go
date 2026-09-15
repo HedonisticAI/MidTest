@@ -11,7 +11,9 @@ type Usecase interface {
 	Register(context.Context, RegisterInput) (*RegisterOutput, error)
 	LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput, error)
 	EndSession(Token string) error
-	GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
+	//GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
+	ListFiles(ctx context.Context, List ListInput) ([]domain.FileInfo, error)
+	DeleteFile(ctx context.Context, ID string, Token string) error
 }
 
 type PostgresRepo interface {
@@ -65,5 +67,17 @@ type EndSessionOutput struct {
 }
 
 type ListInput struct {
-	Filters map[string]string
+	Filters map[string]string `json:"filters"`
+}
+
+type WriteFileInput struct {
+	Name  string   `json:"name"`
+	File  bool     `json:"file"`
+	Token string   `json:"token"`
+	Users []string `json:"grant"`
+}
+
+type WriteFileOutput struct {
+	Json []byte `json:"json,omitempty"`
+	Name string `json:"name"`
 }

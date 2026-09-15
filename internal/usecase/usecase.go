@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"midtest/internal/auth"
 	"midtest/internal/domain"
 	"os"
@@ -15,7 +16,8 @@ type Service struct {
 	CacheRepo    CacheRepo
 }
 
-func NewUsecase(ADMToken string, PostgresRepo PostgresRepo, CacheRepo CacheRepo) Usecase {
+func NewUsecase(ADMToken string, Dir string, PostgresRepo PostgresRepo, CacheRepo CacheRepo) Usecase {
+	os.Mkdir(Dir, os.ModePerm)
 	return &Service{
 		ADMToken:     ADMToken,
 		PostgresRepo: PostgresRepo,
@@ -53,7 +55,17 @@ func (S *Service) EndSession(Token string) error {
 	return err
 }
 
-func (S *Service) ListFiles(ctx context.Context, List ListInput) (interface{}, error) {
+func (S *Service) WriteFile(WriteInput WriteFileInput) (*WriteFileOutput, error) {
+	if !S.CacheRepo.IsActive(WriteInput.Token) {
+		return nil, domain.ErrBadParameter
+	}
+	var Res WriteFileOutput
+	Res.Name = WriteInput.Name
+
+	return &Res, nil
+}
+
+func (S *Service) ListFiles(ctx context.Context, List ListInput) ([]domain.FileInfo, error) {
 	Data, err := S.PostgresRepo.List(ctx, List.Filters)
 	if err != nil {
 		return nil, err
@@ -74,14 +86,14 @@ func (S *Service) GetFile(ctx context.Context, ID string, Token string) (interfa
 	}
 	file, exists := S.CacheRepo.GetFile(ID)
 	if exists {
-		return file, nil
+		return fileTypeSwitcher(file.([]byte), Res.File), nil
 	}
 	memfile, err := os.ReadFile(Res.Path + Res.Name)
 	if err != nil {
 		return nil, err
 	}
 	S.CacheRepo.LoadFile(Res.Name, memfile, 10*time.Minute)
-	return memfile, nil
+	return fileTypeSwitcher(memfile, Res.File), nil
 }
 
 func (S *Service) DeleteFile(ctx context.Context, ID string, Token string) error {
@@ -101,4 +113,16 @@ func (S *Service) DeleteFile(ctx context.Context, ID string, Token string) error
 	}
 	S.CacheRepo.DeleteItem(ID)
 	return nil
+}
+
+func fileTypeSwitcher(file []byte, filetype bool) []byte {
+	if filetype {
+		return file
+	} else {
+		json, err := json.Marshal(file)
+		if err != nil {
+			return nil
+		}
+		return json
+	}
 }

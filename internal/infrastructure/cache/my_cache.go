@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"errors"
 	"sync"
 	"time"
 )
@@ -71,10 +70,6 @@ func (c *Cache) Delete(key string) error {
 	c.c.Lock()
 
 	defer c.c.Unlock()
-
-	if _, found := c.items[key]; !found {
-		return errors.New("Key not found")
-	}
 
 	delete(c.items, key)
 

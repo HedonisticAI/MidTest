@@ -62,6 +62,15 @@ func (P *PostgresRepository) DeleteFile(ctx context.Context, ID string) error {
 	return nil
 }
 
+func (PostgresRepository *PostgresRepository) NewFile(ctx context.Context, FileInfo domain.FileInfo) error {
+	const query = `INSERT INTO Files (name, users, id, path, file) VALUES ($1 $2 $3 $4 $5) RETURNING name`
+	_, err := PostgresRepository.Pool.Exec(ctx, query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (PostgresRepository *PostgresRepository) List(ctx context.Context, Filters map[string]string) ([]domain.FileInfo, error) {
 	var Res []domain.FileInfo
 	query, args := createQuery(Filters)
@@ -69,7 +78,11 @@ func (PostgresRepository *PostgresRepository) List(ctx context.Context, Filters 
 	if err != nil {
 		return nil, err
 	}
-	err = rows.Scan(&Res)
+	for rows.Next() {
+		var file domain.FileInfo
+		rows.Scan(&file.Name, &file.Users, &file.ID, &file.File, &file.Created_at, &file.Updated_at)
+		Res = append(Res, file)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +90,7 @@ func (PostgresRepository *PostgresRepository) List(ctx context.Context, Filters 
 }
 
 func createQuery(Filters map[string]string) (string, []interface{}) {
-	var res = "SELECT  name, users, id, path, files, created_at, updated_at FROM files"
+	var res = "SELECT  name, users, id, path, file, created_at, updated_at FROM files"
 	var args []interface{}
 	if Filters != nil {
 		res += " WHERE"

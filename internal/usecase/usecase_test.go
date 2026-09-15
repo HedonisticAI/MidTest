@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+var Dir = "uploads"
 var DSN = "postgresql://postgres:password@127.0.0.1:5432/test?sslmode=disable"
 
 func CreateUsecase(Cache *cache_repo.RepoCache) (usecase.Usecase, error) {
@@ -22,7 +23,7 @@ func CreateUsecase(Cache *cache_repo.RepoCache) (usecase.Usecase, error) {
 		return nil, err
 	}
 	Repo := postgres_repo.NewRepo(pool)
-	return usecase.NewUsecase("TESTTOKEN", Repo, Cache), nil
+	return usecase.NewUsecase("TESTTOKEN", Dir, Repo, Cache), nil
 }
 
 func TestRegister(t *testing.T) {

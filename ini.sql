@@ -6,7 +6,7 @@ CREATE TABLE if NOT EXISTS Users(
 
 CREATE TABLE if NOT EXISTS Files(
     id UUID PRIMARY KEY DEFAULT uuidv7(),
-    user_id UUID,
+    users text[],
     path text not null,
     file boolean,
     created_at TIMESTAMP DEFAULT NOW(),

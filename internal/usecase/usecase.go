@@ -12,6 +12,7 @@ import (
 
 type Service struct {
 	ADMToken     string
+	Dir          string
 	PostgresRepo PostgresRepo
 	CacheRepo    CacheRepo
 }
@@ -19,6 +20,7 @@ type Service struct {
 func NewUsecase(ADMToken string, Dir string, PostgresRepo PostgresRepo, CacheRepo CacheRepo) Usecase {
 	os.Mkdir(Dir, os.ModePerm)
 	return &Service{
+		Dir:          Dir,
 		ADMToken:     ADMToken,
 		PostgresRepo: PostgresRepo,
 		CacheRepo:    CacheRepo,
@@ -55,13 +57,16 @@ func (S *Service) EndSession(Token string) error {
 	return err
 }
 
-func (S *Service) WriteFile(WriteInput WriteFileInput) (*WriteFileOutput, error) {
-	if !S.CacheRepo.IsActive(WriteInput.Token) {
+func (S *Service) WriteFile(ctx context.Context, WriteInput WriteFileInput) (*WriteFileOutput, error) {
+	if !S.CacheRepo.IsActive(WriteInput.Meta.Token) {
 		return nil, domain.ErrBadParameter
 	}
 	var Res WriteFileOutput
-	Res.Name = WriteInput.Name
-
+	Res.Name = WriteInput.Meta.Name
+	err := S.PostgresRepo.NewFile(ctx, S.transform(WriteInput.Meta))
+	if err != nil {
+		return nil, err
+	}
 	return &Res, nil
 }
 
@@ -125,4 +130,8 @@ func fileTypeSwitcher(file []byte, filetype bool) []byte {
 		}
 		return json
 	}
+}
+
+func (S *Service) transform(Meta Meta) domain.FileInfo {
+	return domain.FileInfo{Name: Meta.Name, File: Meta.File, Users: Meta.Users, Path: S.Dir}
 }

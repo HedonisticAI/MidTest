@@ -11,13 +11,15 @@ type Usecase interface {
 	Register(context.Context, RegisterInput) (*RegisterOutput, error)
 	LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput, error)
 	EndSession(Token string) error
-	//GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
+	GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
+
 	ListFiles(ctx context.Context, List ListInput) ([]domain.FileInfo, error)
 	DeleteFile(ctx context.Context, ID string, Token string) error
 }
 
 type PostgresRepo interface {
 	Register(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.LoginInfo, error)
+	NewFile(ctx context.Context, FileInfo domain.FileInfo) error
 	LogIn(ctx context.Context, AuthInfo auth.LoginInfo) (*auth.AuthInfo, error)
 	GetFileInfo(ctx context.Context, ID string) (domain.FileInfo, error)
 	DeleteFile(ctx context.Context, ID string) error
@@ -71,6 +73,12 @@ type ListInput struct {
 }
 
 type WriteFileInput struct {
+	Meta Meta        `json:"meta"`
+	Json interface{} `json:"json,omitempty"`
+	Body []byte      `json:"body"`
+}
+
+type Meta struct {
 	Name  string   `json:"name"`
 	File  bool     `json:"file"`
 	Token string   `json:"token"`

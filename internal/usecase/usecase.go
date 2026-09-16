@@ -3,11 +3,14 @@ package usecase
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"midtest/internal/auth"
 	"midtest/internal/domain"
 	"os"
 	"slices"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -57,17 +60,74 @@ func (S *Service) EndSession(Token string) error {
 	return err
 }
 
-func (S *Service) WriteFile(ctx context.Context, WriteInput WriteFileInput) (*WriteFileOutput, error) {
-	if !S.CacheRepo.IsActive(WriteInput.Meta.Token) {
+func (S *Service) WriteFile(ctx context.Context, input WriteFileInput) (*WriteFileOutput, error) {
+	if !S.CacheRepo.IsActive(input.Meta.Token) {
+		return nil, domain.ErrUnauthorized
+	}
+
+	if input.Meta.Name == "" {
 		return nil, domain.ErrBadParameter
 	}
-	var Res WriteFileOutput
-	Res.Name = WriteInput.Meta.Name
-	err := S.PostgresRepo.NewFile(ctx, S.transform(WriteInput.Meta))
+
+	data := input.Body
+	if !input.Meta.File {
+		if input.Json == nil {
+			return nil, domain.ErrBadParameter
+		}
+		var err error
+		data, err = json.Marshal(input.Json)
+		if err != nil {
+			return nil, fmt.Errorf("marshal json document: %w", err)
+		}
+	}
+
+	if len(data) == 0 {
+		return nil, domain.ErrBadParameter
+	}
+
+	if err := os.MkdirAll(S.Dir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("create storage directory: %w", err)
+	}
+
+	info := S.transform(input.Meta)
+	info.ID = uuid.NewString()
+	info.Path = S.Dir + string(os.PathSeparator)
+
+	// Сначала пишем во временный файл. Так пользователь никогда не увидит
+	// частично записанный документ по окончательному имени.
+	tmp, err := os.CreateTemp(S.Dir, ".upload-*")
 	if err != nil {
+		return nil, fmt.Errorf("create temporary file: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return nil, fmt.Errorf("write document: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return nil, fmt.Errorf("close document: %w", err)
+	}
+
+	if err := S.PostgresRepo.NewFile(ctx, info); err != nil {
 		return nil, err
 	}
-	return &Res, nil
+
+	finalName := info.Path + info.Name
+	if err := os.Rename(tmpName, finalName); err != nil {
+		// Если запись в БД уже создана, хотя бы не оставляем временный файл.
+		// Удаление записи можно вынести в транзакцию/компенсирующую операцию
+		// репозитория при дальнейшем развитии интерфейса.
+		return nil, fmt.Errorf("move document to storage: %w", err)
+	}
+
+	result := &WriteFileOutput{Name: input.Meta.Name}
+	if !input.Meta.File {
+		result.Json = data
+	}
+
+	return result, nil
 }
 
 func (S *Service) ListFiles(ctx context.Context, List ListInput) ([]domain.FileInfo, error) {

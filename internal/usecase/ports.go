@@ -12,7 +12,7 @@ type Usecase interface {
 	LogIn(ctx context.Context, AuthInfo LoginInput) (*LoginOutput, error)
 	EndSession(Token string) error
 	GetFile(ctx context.Context, ID string, Token string) (interface{}, error)
-
+	WriteFile(ctx context.Context, WriteInput WriteFileInput) (*WriteFileOutput, error)
 	ListFiles(ctx context.Context, List ListInput) ([]domain.FileInfo, error)
 	DeleteFile(ctx context.Context, ID string, Token string) error
 }

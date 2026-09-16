@@ -62,13 +62,21 @@ func (P *PostgresRepository) DeleteFile(ctx context.Context, ID string) error {
 	return nil
 }
 
-func (PostgresRepository *PostgresRepository) NewFile(ctx context.Context, FileInfo domain.FileInfo) error {
-	const query = `INSERT INTO Files (name, users, id, path, file) VALUES ($1 $2 $3 $4 $5) RETURNING name`
-	_, err := PostgresRepository.Pool.Exec(ctx, query)
-	if err != nil {
-		return err
-	}
-	return nil
+func (P *PostgresRepository) NewFile(ctx context.Context, fileInfo domain.FileInfo) error {
+	const query = `
+		INSERT INTO files (name, users, id, path, file)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err := P.Pool.Exec(
+		ctx,
+		query,
+		fileInfo.Name,
+		fileInfo.Users,
+		fileInfo.ID,
+		fileInfo.Path,
+		fileInfo.File,
+	)
+	return err
 }
 
 func (PostgresRepository *PostgresRepository) List(ctx context.Context, Filters map[string]string) ([]domain.FileInfo, error) {

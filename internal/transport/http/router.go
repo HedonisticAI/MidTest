@@ -3,7 +3,6 @@ package http
 import (
 	stdhttp "net/http"
 
-	"midtest/internal/domain"
 	"midtest/internal/usecase"
 )
 
@@ -19,31 +18,4 @@ func NewRouter(uc usecase.Usecase) stdhttp.Handler {
 	mux.HandleFunc("/api/docs/", h.GetOrDeleteDocument)
 
 	return mux
-}
-
-func (h *Handler) CreateOrListDocuments(w stdhttp.ResponseWriter, r *stdhttp.Request) {
-	switch r.Method {
-	case stdhttp.MethodPost:
-		h.CreateDocument(w, r)
-	case stdhttp.MethodGet, stdhttp.MethodHead:
-		h.ListDocuments(w, r)
-	default:
-		h.writeError(w, domain.ErrBadRequestMethod)
-	}
-}
-
-func (h *Handler) GetOrDeleteDocument(w stdhttp.ResponseWriter, r *stdhttp.Request) {
-	if pathID(r) == "" {
-		h.writeError(w, domain.ErrBadParameter)
-		return
-	}
-
-	switch r.Method {
-	case stdhttp.MethodGet, stdhttp.MethodHead:
-		h.GetDocument(w, r)
-	case stdhttp.MethodDelete:
-		h.DeleteDocument(w, r)
-	default:
-		h.writeError(w, domain.ErrBadRequestMethod)
-	}
 }

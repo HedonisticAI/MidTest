@@ -11,6 +11,7 @@ type Config struct {
 	DB_DSN   string
 	HttpPort string
 	ADMToken string
+	Dir      string
 }
 
 func NewConfig() *Config {
@@ -30,5 +31,9 @@ func NewConfig() *Config {
 	if !exist {
 		return nil
 	}
-	return &Config{DB_DSN: DSN, HttpPort: HttpPort, ADMToken: ADMToken}
+	Dir, exist := os.LookupEnv("DIR")
+	if !exist {
+		return nil
+	}
+	return &Config{DB_DSN: DSN, HttpPort: HttpPort, ADMToken: ADMToken, Dir: Dir}
 }
